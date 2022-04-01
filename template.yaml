@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Sam Tutorial
+
+Metadata:
+ AWS::CloudFormation::Interface:
+  ParameterGroups:
+   - Label: {default: 'Optional parameters'}
+     Parameters:
+      - DeploymentStage
+      
+Parameters:
+  DeploymentStage:
+    Type: String
+    Description: 'Name of Deployment stage. dev, test, demo, prod'
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - demo
+      - prod
+
+Globals:
+  Function:
+    MemorySize: 128
+    Timeout: 10
+    Runtime: python3.9
+    Architectures:
+      - x86_64
+
+Resources:
+
+  SamApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Sub ${DeploymentStage}
+      OpenApiVersion: 3.0.0
+      BinaryMediaTypes:
+        - '*~1*'
+  
+  CommonCodeLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: common_code
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+
+  UsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: api/
+      Handler: routes/users/users.lambda_handler
+      Events:
+        GetUsers:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: get
+            RestApiId: 
+              Ref: SamApi
+        PostUser:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: post
+            RestApiId: 
+              Ref: SamApi
+        DeleteUser:
+          Type: Api
+          Properties: 
+            Path: /user/{userId}
+            Method: delete
+            RestApiId: 
+              Ref: SamApi
+  
+  MerchantsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: api/
+      Handler: routes/merchants/merchants.lambda_handler
+      Layers:
+        - !Ref CommonCodeLayer
+      Events:
+        GetMerchants:
+          Type: Api
+          Properties: 
+            Path: /merchants
+            Method: get
+            RestApiId: 
+              Ref: SamApi
+  
+  BabiesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: api2/
+      Handler: babies.lambda_handler
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /babies
+            Method: get
+            RestApiId: 
+              Ref: SamApi
+
+
+Outputs:
+  UsersFunction:
+    Description: "Users API Function"
+    Value: !GetAtt UsersFunction.Arn
