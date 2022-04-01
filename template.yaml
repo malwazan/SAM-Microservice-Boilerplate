@@ -51,7 +51,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: api/
-      Handler: routes/users/users.lambda_handler
+      Handler: routes/users.lambda_handler
       Events:
         GetUsers:
           Type: Api
@@ -79,7 +79,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: api/
-      Handler: routes/merchants/merchants.lambda_handler
+      Handler: routes/merchants.lambda_handler
       Layers:
         - !Ref CommonCodeLayer
       Events:

@@ -2,6 +2,8 @@ import json
 import boto3
 import sys
 
+sys.path.append("../../../common_code")
+
 from controllers.MerchantsController import GetMerchants
 from helpers import validate_login_token
 
