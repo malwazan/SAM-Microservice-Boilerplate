@@ -50,6 +50,17 @@ Resources:
       BinaryMediaTypes:
         - '*~1*'
   
+  SamHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Sub ${DeploymentStage}
+      DefinitionBody:
+        'Fn::Transform':
+          Name: AWS::Include
+          Parameters:
+            Location: httpapi.yaml
+
+  
   # Layers
   CommonCodeLayer:
     Type: AWS::Serverless::LayerVersion
@@ -104,23 +115,37 @@ Resources:
             Method: get
             RestApiId: 
               Ref: SamApi
-  
-  BabiesFunction:
+
+
+  CatFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: backend/api2/
-      Handler: babies.lambda_handler
+      CodeUri: backend/httpapi/
+      Handler: cat.lambda_handler
       Events:
-        HelloWorld:
-          Type: Api
-          Properties:
-            Path: /babies
+        GetCat:
+          Type: HttpApi
+          Properties: 
+            Path: /cats
             Method: get
-            RestApiId: 
-              Ref: SamApi
+            ApiId: !Ref SamHttpApi
+      Policies: 
+        - AmazonSNSFullAccess
+  
+
+  # CatFunctionPermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !GetAtt CatFunction.Arn
+  #     Principal: apigateway.amazonaws.com
+  #     SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SamHttpApi}/*/GET/"
 
 
 Outputs:
   UsersFunction:
     Description: "Users API Function"
     Value: !GetAtt UsersFunction.Arn
+  CatFunctionArn:
+    Description: "Cat Function Arn"
+    Value: !GetAtt CatFunction.Arn

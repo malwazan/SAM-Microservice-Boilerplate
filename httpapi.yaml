@@ -1,0 +1,83 @@
+openapi: "3.0.1"
+info:
+  title: "sam_http_api"
+  description: "A simple http api deployed with sam"
+  version: "2022-04-04 10:09:41UTC"
+
+paths:
+  /cats:
+    get:
+      operationId: GetCat
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+      x-amazon-apigateway-integrations:
+        type: aws_proxy
+        httpMethod: POST
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CatFunction.Arn}/invocations"
+        passthroughBehavior: when_no_templates
+        payloadFormatVersion: 2.0
+      responses:
+        "200":
+          description: "Successfully created a message."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: "Bad Request Exception"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestException"
+        "500":
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerErrorException"
+
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        message: 
+          type: string
+          description: "returned message from lambda"
+
+    BadRequestException:
+      type: object
+      properties:
+        message:
+          type: string
+        errorCode:
+          type: string
+
+    InternalServerErrorException:
+      type: object
+      properties:
+        message:
+          type: string
+        errorCode:
+          type: string
+
+
+
+# paths:
+#   /helloo:
+#     get:
+#       responses:
+#         default:
+#           description: "Default response for GET /helloo"
+#       x-amazon-apigateway-integration:
+#         payloadFormatVersion: "2.0"
+#         type: "aws_proxy"
+#         httpMethod: "POST"
+#         uri: "arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:677331532364:function:test_lambda_http_api/invocations"
+#         connectionType: "INTERNET"
+# x-amazon-apigateway-importexport-version: "1.0"

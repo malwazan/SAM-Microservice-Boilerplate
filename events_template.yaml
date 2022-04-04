@@ -22,8 +22,12 @@ Resources:
       CodeUri: backend/events/
       Handler: logs_event.lambda_handler
       Runtime: python3.9
+      Events:
+        SnsEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref LogsSns
   
-
 
   # SNS Events
   LogsSns:
