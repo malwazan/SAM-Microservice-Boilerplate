@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  DeploymentStage:
+    Type: String
+    Description: 'Name of Deployment stage. dev, test, demo, prod'
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - demo
+      - prod
+
+
+
+
+Resources:
+  LogsEventFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/events/
+      Handler: logs_event.lambda_handler
+      Runtime: python3.9
+  
+
+
+  # SNS Events
+  LogsSns:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'LogsSns-${DeploymentStage}'
+
+Outputs:
+  # Functions
+  LogsEventFunctionArn:
+    Description: Arn of Logs Event Function
+    Value: !GetAtt LogsEventFunction.Arn
+  
+  # SNS
+  LogsSnsArn:
+    Description: Arn of Logs Sns Function
+    Value:  !Ref LogsSns

@@ -27,9 +27,21 @@ Globals:
     Runtime: python3.9
     Architectures:
       - x86_64
+    Environment:
+      Variables:
+        sns_logs_arn: !GetAtt EventsTemplate.Outputs.LogsSnsArn
 
 Resources:
 
+  # Events Template
+  EventsTemplate:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./events_template.yaml
+      Parameters:
+        DeploymentStage: !Sub ${DeploymentStage}
+
+  # API Gateway
   SamApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -38,19 +50,21 @@ Resources:
       BinaryMediaTypes:
         - '*~1*'
   
+  # Layers
   CommonCodeLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: common_code
+      ContentUri: backend/common_code
       CompatibleRuntimes:
         - python3.9
     Metadata:
       BuildMethod: python3.9
 
+  # Functions
   UsersFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: api/
+      CodeUri: backend/api/
       Handler: routes/users.lambda_handler
       Events:
         GetUsers:
@@ -78,7 +92,7 @@ Resources:
   MerchantsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: api/
+      CodeUri: backend/api/
       Handler: routes/merchants.lambda_handler
       Layers:
         - !Ref CommonCodeLayer
@@ -94,7 +108,7 @@ Resources:
   BabiesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: api2/
+      CodeUri: backend/api2/
       Handler: babies.lambda_handler
       Events:
         HelloWorld:

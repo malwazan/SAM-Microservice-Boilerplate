@@ -9,5 +9,5 @@ s3_prefix = "sam-app"
 region = "eu-west-2"
 profile = "apptopus"
 confirm_changeset = true
-capabilities = "CAPABILITY_IAM"
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
 image_repositories = []
