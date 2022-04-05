@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  DeploymentStage:
+    Type: String
+    Description: 'Name of Deployment stage. dev, test, demo, prod'
+  CommonCodeLayer:
+    Type: String
+    Description: 'Layer of Common code and dependencies'
+
+
+Resources:
+
+  ### Import Templates
+  IamTemplate:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./iam_template.yaml
+
+  ### HTTP API
+  SamHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Sub ${DeploymentStage}
+      DefinitionBody:
+        'Fn::Transform':
+          Name: AWS::Include
+          Parameters:
+            Location: httpapi.yaml
+
+  ### Functions
+  CatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/httpapi/
+      Handler: cat.lambda_handler
+      Layers:
+        - !Sub ${CommonCodeLayer}
+      Runtime: python3.9
+      Events:
+        GetCat:
+          Type: HttpApi
+          Properties: 
+            Path: /cats
+            Method: get
+            ApiId: !Ref SamHttpApi
+      Role: !GetAtt IamTemplate.Outputs.LambdaExecutionRoleArn
+
+Outputs:
+  CatFunctionArn:
+    Description: "Cat Function Arn"
+    Value: !GetAtt CatFunction.Arn

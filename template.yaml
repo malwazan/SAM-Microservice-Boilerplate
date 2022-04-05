@@ -29,19 +29,28 @@ Globals:
       - x86_64
     Environment:
       Variables:
-        sns_logs_arn: !GetAtt EventsTemplate.Outputs.LogsSnsArn
+        sns_logs_arn: 
+          Fn::GetAtt: [ EventsTemplate, Outputs.LogsSnsArn ]
 
 Resources:
 
-  # Events Template
+  ### Import Template
   EventsTemplate:
     Type: AWS::Serverless::Application
     Properties:
       Location: ./events_template.yaml
       Parameters:
         DeploymentStage: !Sub ${DeploymentStage}
+  ApiTemplate:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./api_template.yaml
+      Parameters:
+        DeploymentStage: !Sub ${DeploymentStage}
+        CommonCodeLayer: !Ref CommonCodeLayer
 
-  # API Gateway
+
+  ### API Gateway
   SamApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -50,18 +59,18 @@ Resources:
       BinaryMediaTypes:
         - '*~1*'
   
-  SamHttpApi:
-    Type: AWS::Serverless::HttpApi
-    Properties:
-      StageName: !Sub ${DeploymentStage}
-      DefinitionBody:
-        'Fn::Transform':
-          Name: AWS::Include
-          Parameters:
-            Location: httpapi.yaml
+  # SamHttpApi:
+  #   Type: AWS::Serverless::HttpApi
+  #   Properties:
+  #     StageName: !Sub ${DeploymentStage}
+  #     DefinitionBody:
+  #       'Fn::Transform':
+  #         Name: AWS::Include
+  #         Parameters:
+  #           Location: httpapi.yaml
 
   
-  # Layers
+  ### Layers
   CommonCodeLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -71,7 +80,8 @@ Resources:
     Metadata:
       BuildMethod: python3.9
 
-  # Functions
+
+  ### Functions
   UsersFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -83,22 +93,19 @@ Resources:
           Properties:
             Path: /users
             Method: get
-            RestApiId: 
-              Ref: SamApi
+            RestApiId: !Ref SamApi
         PostUser:
           Type: Api
           Properties:
             Path: /users
             Method: post
-            RestApiId: 
-              Ref: SamApi
+            RestApiId: !Ref SamApi
         DeleteUser:
           Type: Api
           Properties: 
             Path: /user/{userId}
             Method: delete
-            RestApiId: 
-              Ref: SamApi
+            RestApiId: !Ref SamApi
   
   MerchantsFunction:
     Type: AWS::Serverless::Function
@@ -113,39 +120,30 @@ Resources:
           Properties: 
             Path: /merchants
             Method: get
-            RestApiId: 
-              Ref: SamApi
+            RestApiId: !Ref SamApi
 
 
-  CatFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: backend/httpapi/
-      Handler: cat.lambda_handler
-      Events:
-        GetCat:
-          Type: HttpApi
-          Properties: 
-            Path: /cats
-            Method: get
-            ApiId: !Ref SamHttpApi
-      Policies: 
-        - AmazonSNSFullAccess
-  
-
-  # CatFunctionPermission:
-  #   Type: AWS::Lambda::Permission
+  # CatFunction:
+  #   Type: AWS::Serverless::Function
   #   Properties:
-  #     Action: lambda:InvokeFunction
-  #     FunctionName: !GetAtt CatFunction.Arn
-  #     Principal: apigateway.amazonaws.com
-  #     SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SamHttpApi}/*/GET/"
+  #     CodeUri: backend/httpapi/
+  #     Handler: cat.lambda_handler
+  #     Events:
+  #       GetCat:
+  #         Type: HttpApi
+  #         Properties: 
+  #           Path: /cats
+  #           Method: get
+  #           ApiId: !Ref SamHttpApi
+  #     Policies: 
+  #       - AmazonSNSFullAccess
+  
 
 
 Outputs:
   UsersFunction:
     Description: "Users API Function"
     Value: !GetAtt UsersFunction.Arn
-  CatFunctionArn:
-    Description: "Cat Function Arn"
-    Value: !GetAtt CatFunction.Arn
+  # CatFunctionArn:
+  #   Description: "Cat Function Arn"
+  #   Value: !GetAtt CatFunction.Arn

@@ -13,10 +13,7 @@ def lambda_handler(event, context):
     # print("paths...")
     # for p in sys.path: print(p)
 
-    # print(event.get("body"))
-    # event_body = json.loads(event.get("body"))
-    # print(event_body.get("details"))
-    
+    """
     f_body = event["body"]
     if event.get("isBase64Encoded"):
         f_body = base64.b64decode(f_body)
@@ -28,6 +25,7 @@ def lambda_handler(event, context):
     pdict['CONTENT-LENGTH'] = len(event['body'])
     form_data = cgi.parse_multipart(fp, pdict)
     print("form_data: ", form_data)
+    """
 
 
     return {
